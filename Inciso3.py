@@ -1,24 +1,64 @@
 from dynamicDiffusion import DynamicDiffusion
+from Inciso2 import ParticleDiffusion
 import numpy as np
 import os
 import matplotlib.pyplot as plt
 
 def experimentar_variacion_K(M, N, T, u0, valores_K):
     for K in valores_K:
-        print(f"Ejecutando simulación con K={K}")
+        print(f"Ejecutando simulación con K={K} (DynamicDiffusion)")
         sim = DynamicDiffusion(M, N, T, u0, K)
         sim.runSimulation()
         sim.plotDiffusion()
         name = f'diffusion_K_{int(K*10)}'
         save_png_images(sim, name)
 
+def experimentar_variacion_K_particle(M, N, P, T, u0, valores_K, Nexp, mask=None):
+    for K in valores_K:
+        print(f"Ejecutando simulación con K={K} (ParticleDiffusion)")
+        # Distribución inicial en forma de anillo
+        for i in range(M):
+            for j in range(N):
+                if 5 <= np.sqrt((i - M//2)**2 + (j - N//2)**2) <= 7:
+                    u0[i, j] = 1
+        u0 /= u0.sum()
+
+        # Máscara de celdas activas
+        mask = np.ones((M, N), dtype=bool)
+        mask[:M//4, :N//4] = False
+
+        sim = ParticleDiffusion(M, N, P, T, u0, K, Nexp, mask)
+        sim.run_simulation()
+        sim.plot_diffusion()
+        name = f'diffusion_K_{int(K*10)}_particle'
+        save_png_images(sim, name)
+
 def experimentar_variacion_distribucion_inicial(M, N, T, K, distribuciones):
     for idx, u0 in enumerate(distribuciones):
-        print(f"Ejecutando simulación con distribución inicial {idx + 1}")
+        print(f"Ejecutando simulación con distribución inicial {idx + 1} (DynamicDiffusion)")
         sim = DynamicDiffusion(M, N, T, u0, K)
         sim.runSimulation()
         sim.plotDiffusion()
         name = f'diffusion_u0_{idx + 1}'
+        save_png_images(sim, name)
+
+def experimentar_variacion_distribucion_inicial_particle(M, N, P, T, K, distribuciones, Nexp, mask=None):
+    for idx, u0 in enumerate(distribuciones):
+        print(f"Ejecutando simulación con distribución inicial {idx + 1} (ParticleDiffusion)")
+        # Distribución inicial en forma de anillo
+        for i in range(M):
+            for j in range(N):
+                if 5 <= np.sqrt((i - M//2)**2 + (j - N//2)**2) <= 7:
+                    u0[i, j] = 1
+        u0 /= u0.sum()
+
+        # Máscara de celdas activas
+        mask = np.ones((M, N), dtype=bool)
+        mask[:M//4, :N//4] = False
+        sim = ParticleDiffusion(M, N, P, T, u0, K, Nexp, mask)
+        sim.run_simulation()
+        sim.plot_diffusion()
+        name = f'diffusion_u0_{idx + 1}_particle'
         save_png_images(sim, name)
 
 def generar_distribuciones_iniciales(M, N):
@@ -73,18 +113,28 @@ if __name__ == "__main__":
         os.makedirs(output_dir)
 
     # Parámetros de la simulación
-    M, N = 20, 20
+    M1, N1 = 100, 100
+    M2, N2 = 20, 20
     T = 100
+    P = 500
+    Nexp = 50
     K_fijo = 0.2  # Valor de K fijo para variar distribución inicial
     valores_K = [0.1, 0.2, 0.3, 0.5]  # Diferentes valores de K
 
     # Generar distribuciones iniciales
-    distribuciones = generar_distribuciones_iniciales(M, N)
+    distribuciones1 = generar_distribuciones_iniciales(M1, N1)
+    distribuciones2 = generar_distribuciones_iniciales(M2, N2)
 
     # Variando K con una distribución inicial fija
     print("Variando K con distribución inicial fija")
-    experimentar_variacion_K(M, N, T, distribuciones[0], valores_K)
+    experimentar_variacion_K(M1, N1, T, distribuciones1[0], valores_K)
+
+    print("Variando K con ParticleDiffusion")
+    experimentar_variacion_K_particle(M2, N2, P, T, distribuciones2[0], valores_K, Nexp)
 
     # Variando la distribución inicial con un K fijo
     print("Variando distribución inicial con K fijo")
-    experimentar_variacion_distribucion_inicial(M, N, T, K_fijo, distribuciones)
+    experimentar_variacion_distribucion_inicial(M1, N1, T, K_fijo, distribuciones1)
+
+    print("Variando distribución inicial con ParticleDiffusion")
+    experimentar_variacion_distribucion_inicial_particle(M2, N2, P, T, K_fijo, distribuciones2, Nexp)
