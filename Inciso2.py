@@ -58,9 +58,9 @@ class ParticleDiffusion:
         def update(frame):
             cax.set_data(self.history[frame])
             ax.set_title(f"Tiempo: {frame}")
-            return cax, ax
+            return cax,
 
-        ani = FuncAnimation(fig, update, frames=len(self.history), interval=interval, blit=True)
+        ani = FuncAnimation(fig, update, frames=self.T, interval=interval, blit=True)
 
         # Guardar el video si es requerido
         if save_video:
@@ -70,7 +70,7 @@ class ParticleDiffusion:
 
         # Guardar imágenes en intervalos de tiempo específicos
         if save_images:
-            image_times = [0, 25, 50, 75, 99]
+            image_times = [0, 25, 50, 99]
             output_dir = 'files/Inciso2'
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
